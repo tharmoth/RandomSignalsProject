@@ -13,64 +13,96 @@ on = ones(1,3*unit);
 off = zeros(1,unit);
 dash = [off on off];
 
-% Calculate a space vector
+% Calculate a word space vector
 on = ones(1,.5*unit);
 word_space = zeros(1,7*unit); 
 word_space = [on word_space on];
 
-% Calculate a space vector
+% Calculate a letter space vector
 on = ones(1,unit);
 letter_space = zeros(1,3*unit); 
 letter_space = [on letter_space on];
 
 % Get the converted morse input
-input = ' abc defg ';
-x = morse(input);
-plot(x); hold on
-xlim([1 length(x)])
-ylim([-1.3 1.3])
-% soundsc(x, 1000)
+input = ' hello world this is 555 a longer high error test ';
+x_raw = morse(input);
+x = x_raw;
+soundsc(x, 1000)
 
-t = .8;
+% Filter the signal to digital
+x = medfilt1(x, unit);
+x(x < .5) = 0;
+x(x >= .5) = 1;
+
+t_dash = .85;
+t_dot = .75;
+t_letter = .85;
+t_word = .9;
+
 % Dashes
 [dash_corro,lags_dash] = xcorr(x, dash);
 [na_dash_corro, lags_dash] = xcorr(~x, ~dash);
 dash_corro = dash_corro + na_dash_corro;
 dash_corro = dash_corro / max(dash_corro);
-dash_locatoins = find_peaks(dash_corro, t);
+dash_locatoins = find_peaks(dash_corro, t_dash);
 
 % Dots
 [dot_corro,lags_dot] = xcorr(x, dots);
 [na_dot_corro,lags_dot] = xcorr(~x, ~dots);
 dot_corro = dot_corro + na_dot_corro;
 dot_corro = dot_corro / max(dot_corro);
-dot_locations = find_peaks(dot_corro, t);
+dot_locations = find_peaks(dot_corro, t_dot);
 
 % Spaces Letter
 [space_letter_corro, lags_space] = xcorr(~x, ~letter_space);
 [na_space_letter_corro, lags_space] = xcorr(x, letter_space);
 space_letter_corro = space_letter_corro + na_space_letter_corro;
 space_letter_corro = space_letter_corro / max(space_letter_corro);
-space_letter_locations = find_peaks(space_letter_corro, t);
+space_letter_locations = find_peaks(space_letter_corro, t_letter);
 
 % Spaces Word
 [space_word_corro,lags_space] = xcorr(~x, ~word_space);
+[na_space_word_corro, lags_space] = xcorr(x, letter_space);
+% space_word_corro = space_word_corro + na_space_word_corro;
 space_word_corro = space_word_corro / max(space_word_corro);
-space_word_locations = find_peaks(space_word_corro, t);
+space_word_locations = find_peaks(space_word_corro, t_word);
 
+% Plot
+subplot(2, 2 , 1); hold on;  xlim([1 length(x)]);
+threshold_line = ones(1, length(x))*t_dash; 
+xlim([lags_dash(find(dash_corro > .001, 1, 'first')) length(x)]);
+ylim([-.3 1.3])
+title("Dash Plot")
+plot(x);
+plot(threshold_line)
+plot(lags_dash, dash_corro, 'r');
 
-a = [letter_space dot dash letter_space];
-[a_corro,a_lags] = xcorr(x, a);
-[na_corro,na_lags] = xcorr(~x, ~a);
-a_corro = a_corro + na_corro;
-a_corro = a_corro / max(a_corro);
-a_locations = find_peaks(a_corro, .9);
+subplot(2, 2 , 2);  hold on; 
+threshold_line = ones(1, length(x))*t_dot; 
+xlim([lags_dot(find(dot_corro > .001, 1, 'first')) length(x)]);
+ylim([-.3 1.3])
+title("Dot Plot")
+plot(x_raw)
+plot(threshold_line)
+plot(lags_dot, dot_corro, 'r')
 
-plot(lags_dash, dash_corro)
-% plot(lags_dot, dot_corro)
-% plot(lags_space, space_letter_corro)
-% plot(lags_space, space_word_corro)
-% plot(a_lags, a_corro)
+subplot(2, 2 , 3); hold on;
+threshold_line = ones(1, length(x))*t_letter; 
+xlim([lags_space(find(space_letter_corro > .001, 1, 'first')) length(x)]);
+ylim([-.3 1.3])
+title("Letter Space Plot")
+plot(x_raw)
+plot(threshold_line)
+plot(lags_space, space_letter_corro, 'r')
+
+subplot(2, 2 , 4); hold on;
+threshold_line = ones(1, length(x))*t_word; 
+xlim([lags_space(find(space_word_corro > .001, 1, 'first')) length(x)]); 
+ylim([-.3 1.3])
+title("Word Space Plot")
+plot(x_raw)
+plot(threshold_line)
+plot(lags_space, space_word_corro, 'r')
 
 
 % Build the output from the locations of dots dashes and spaces
@@ -112,28 +144,38 @@ while ~isempty(dot_locations) || ~isempty(dash_locatoins) || ~isempty(space_lett
     elseif ~isempty(space_word_locations)
         space_word_locations = space_word_locations(2:length(space_word_locations));
         output_string = append(output_string, " - ");
+    else
+        disp("Error two items at same index")
+        break
     end
 end
-output_string = strtrim(output_string)
-outputs = strsplit(output_string)
+num_dots = length(strfind(output_string,'.'));
+num_dashes = length(strfind(output_string,'_'));
+percent_dots = num_dots / (num_dots + num_dashes) * 100;
+percent_dashes = num_dashes / (num_dots + num_dashes) * 100;
+
+output_string = strtrim(output_string);
+outputs = strsplit(output_string);
 
 % Convert the output dots and dashes to alphanumeric
 % codes = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
 % characters = {'.____', '..___', '...__', '...._', '.....', '_....', '__...', '___..', '____.', '_____'};
-codes = {' ','1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l' ,'m', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+codes = {' ','1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L' ,'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
 characters = {'-', '.____', '..___', '...__', '...._', '.....', '_....', '__...', '___..', '____.', '_____', '._', '_...', '_._.', '_..', '.', '.._.', '__.', '....', '..', '.___', '_._', '._..', '__', '_.', '___', '.__.', '__._', '._.', '...', '_', '.._', '..._', '.__', '_.._', '_.__', '__..'};
 dictionary = containers.Map(characters, codes);
 output_letters = "";
 for i = outputs
-    i
+%     i
     if isKey(dictionary, i)
         output_letters = append(output_letters, dictionary(i));
     end
 end
 
-disp("Input:" + input)
+disp("Input: " + input)
+disp("Output: " + output_letters)
 disp("Output Dots Dashes: " + output_string)
-disp("Output:" + output_letters)
+disp("Percentage Dashes: " + percent_dashes + "%")
+disp("Percentage Dots: " + percent_dots + "%")
 
 
 function peaks = find_peaks(signal, threshold)
@@ -145,7 +187,6 @@ function peaks = find_peaks(signal, threshold)
         current = signal(i);
         next = signal(i + 1);
         if current > threshold && current > next && current >= last
-            [current next]
             peaks = [peaks, i];
         end
     end

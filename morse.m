@@ -66,10 +66,9 @@ morseDictionary = {{' ',word_space},{'',''},{'',''},{'',''},...
     %a string.
     morseText = cell2mat(morseText);
     
-    
-    
   %Takes morseText and creates an image representation of the encoded string.  
   x = morseText;
+  morseText = morseText * (9/10) + randn(1, length(morseText)) * (1/10);
 % for k=1:length(x)
 %   x0=k;
 %   y0=0;
@@ -83,17 +82,15 @@ end
 
 %generates dots
 function dot = dot
-    unit = 100;
-    on = ones(1,unit+round(.5*rand*unit));
-    off = zeros(1,unit+round(.5*rand*unit));
+    on = ones(1, unit+error_offset);
+    off = zeros(1,unit+error_offset);
     dot = [on off];
 end
 
 %generates dashes
 function dash = dash
-    unit = 100;
-    on = ones(1,3*unit+round(.5*rand*unit));
-    off = zeros(1,unit+round(.5*rand*unit));
+    on = ones(1,3*unit+error_offset);
+    off = zeros(1,unit+error_offset);
     dash = [on off];
 end
 
@@ -101,14 +98,24 @@ end
 %functions. word spaces are included in the morse dictionary in the first
 %element.
 function word_space = word_space
-    unit = 100;
-    word_space = zeros(1,2*unit+round(.5*rand*unit)); 
+    word_space = zeros(1,2*unit+error_offset); 
 end
 
 %for inter-letter spaces, inter element spaces are included in the 2 above
 %functions. word spaces are included in the morse dictionary in the first
 %element.
 function letter_space = letter_space
+    letter_space = zeros(1,2*unit+error_offset); 
+end
+
+
+function error_offset = error_offset
+    percentage = .4;
     unit = 100;
-    letter_space = zeros(1,2*unit+round(.5*rand*unit)); 
+    error_offset = round(percentage/2*(rand*2-1)*unit)
+end
+
+
+function unit = unit
+    unit = 100;
 end
