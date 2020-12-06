@@ -112,7 +112,7 @@ end
 function error_offset = error_offset
     percentage = .4;
     unit = 100;
-    error_offset = round(percentage/2*(rand*2-1)*unit)
+    error_offset = round(percentage/2*(rand*2-1)*unit);
 end
 
 
