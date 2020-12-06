@@ -84,16 +84,16 @@ end
 %generates dots
 function dot = dot
     unit = 100;
-    on = ones(1,unit+round(.0*rand*unit));
-    off = zeros(1,unit+round(.0*rand*unit));
+    on = ones(1,unit+round(.5*rand*unit));
+    off = zeros(1,unit+round(.5*rand*unit));
     dot = [on off];
 end
 
 %generates dashes
 function dash = dash
     unit = 100;
-    on = ones(1,3*unit+round(.0*rand*unit));
-    off = zeros(1,unit+round(.0*rand*unit));
+    on = ones(1,3*unit+round(.5*rand*unit));
+    off = zeros(1,unit+round(.5*rand*unit));
     dash = [on off];
 end
 
@@ -102,7 +102,7 @@ end
 %element.
 function word_space = word_space
     unit = 100;
-    word_space = zeros(1,2*unit+round(.0*rand*unit)); 
+    word_space = zeros(1,2*unit+round(.5*rand*unit)); 
 end
 
 %for inter-letter spaces, inter element spaces are included in the 2 above
@@ -110,26 +110,5 @@ end
 %element.
 function letter_space = letter_space
     unit = 100;
-    letter_space = zeros(1,2*unit+round(.0*rand*unit)); 
+    letter_space = zeros(1,2*unit+round(.5*rand*unit)); 
 end
-
-% %generates dots
-% function dots = dot
-%     on = ones(1,1+round(0.5*randn+1));
-%     off = zeros(1,1+round(0.5*randn+1));
-%     dots = [on off];
-% end
-% 
-% %generates dashes
-% function dash = dash
-%     on = ones(1,4+round(randn+2));
-%     off = zeros(1,1+round(0.5*randn+1));
-%     dash = [on off];
-% end
-% 
-% %for inter-letter spaces, inter element spaces are included in the 2 above
-% %functions. word spaces are included in the morse dictionary in the first
-% %element.
-% function space = space
-%     space = zeros(1,1+round(0.5*randn+1)); 
-% end

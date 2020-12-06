@@ -1,4 +1,4 @@
-clc; clear; clf; close all; format compact; clear sound;
+clc; clear; clf; format compact; clear sound;
 
 unit = 100;
 
@@ -14,43 +14,63 @@ off = zeros(1,unit);
 dash = [off on off];
 
 % Calculate a space vector
+on = ones(1,.5*unit);
 word_space = zeros(1,7*unit); 
+word_space = [on word_space on];
 
 % Calculate a space vector
+on = ones(1,unit);
 letter_space = zeros(1,3*unit); 
+letter_space = [on letter_space on];
 
 % Get the converted morse input
-input = ' ab c ';
+input = ' abc defg ';
 x = morse(input);
 plot(x); hold on
 xlim([1 length(x)])
 ylim([-1.3 1.3])
 % soundsc(x, 1000)
-               
+
+t = .8;
 % Dashes
 [dash_corro,lags_dash] = xcorr(x, dash);
+[na_dash_corro, lags_dash] = xcorr(~x, ~dash);
+dash_corro = dash_corro + na_dash_corro;
 dash_corro = dash_corro / max(dash_corro);
-dash_locatoins = find_peaks(dash_corro, .9);
+dash_locatoins = find_peaks(dash_corro, t);
 
 % Dots
 [dot_corro,lags_dot] = xcorr(x, dots);
+[na_dot_corro,lags_dot] = xcorr(~x, ~dots);
+dot_corro = dot_corro + na_dot_corro;
 dot_corro = dot_corro / max(dot_corro);
-dot_locations = find_peaks(dot_corro, .9);
+dot_locations = find_peaks(dot_corro, t);
 
 % Spaces Letter
 [space_letter_corro, lags_space] = xcorr(~x, ~letter_space);
+[na_space_letter_corro, lags_space] = xcorr(x, letter_space);
+space_letter_corro = space_letter_corro + na_space_letter_corro;
 space_letter_corro = space_letter_corro / max(space_letter_corro);
-space_letter_locations = find_peaks(space_letter_corro, .9);
+space_letter_locations = find_peaks(space_letter_corro, t);
 
 % Spaces Word
 [space_word_corro,lags_space] = xcorr(~x, ~word_space);
 space_word_corro = space_word_corro / max(space_word_corro);
-space_word_locations = find_peaks(space_word_corro, .9);
+space_word_locations = find_peaks(space_word_corro, t);
 
+
+a = [letter_space dot dash letter_space];
+[a_corro,a_lags] = xcorr(x, a);
+[na_corro,na_lags] = xcorr(~x, ~a);
+a_corro = a_corro + na_corro;
+a_corro = a_corro / max(a_corro);
+a_locations = find_peaks(a_corro, .9);
+
+plot(lags_dash, dash_corro)
 % plot(lags_dot, dot_corro)
-% plot(lags_dot, dot_corro)
-plot(lags_space, space_letter_corro)
+% plot(lags_space, space_letter_corro)
 % plot(lags_space, space_word_corro)
+% plot(a_lags, a_corro)
 
 
 % Build the output from the locations of dots dashes and spaces
@@ -106,7 +126,9 @@ dictionary = containers.Map(characters, codes);
 output_letters = "";
 for i = outputs
     i
-    output_letters = append(output_letters, dictionary(i));
+    if isKey(dictionary, i)
+        output_letters = append(output_letters, dictionary(i));
+    end
 end
 
 disp("Input:" + input)
@@ -122,7 +144,8 @@ function peaks = find_peaks(signal, threshold)
         last = signal(i - 1);
         current = signal(i);
         next = signal(i + 1);
-        if current > threshold && current > next && current > last
+        if current > threshold && current > next && current >= last
+            [current next]
             peaks = [peaks, i];
         end
     end
