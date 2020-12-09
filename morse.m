@@ -66,9 +66,11 @@ morseDictionary = {{' ',word_space},{'',''},{'',''},{'',''},...
     %a string.
     morseText = cell2mat(morseText);
     
-  %Takes morseText and creates an image representation of the encoded string.  
-  x = morseText;
-  morseText = morseText * (9/10) + randn(1, length(morseText)) * (1/10);
+      %Takes morseText and creates an image representation of the encoded string.  
+      x = morseText;
+    
+        morseText = awgn(morseText, 1, 'measured');
+%      morseText = morseText * (9/10) + randn(1, length(morseText)) * (1/10);
 % for k=1:length(x)
 %   x0=k;
 %   y0=0;
@@ -110,7 +112,7 @@ end
 
 
 function error_offset = error_offset
-    percentage = .4;
+    percentage = 0;
     unit = 100;
     error_offset = round(percentage/2*(rand*2-1)*unit);
 end

@@ -4,13 +4,13 @@ unit = 100;
 
 % Calculate a dots vector
 on = ones(1,unit);
-off = zeros(1,unit);
+off = zeros(1,1*unit);
 dots = [off on off];
 dot = dots;
 
 % Calculate a dash vector
 on = ones(1,3*unit);
-off = zeros(1,unit);
+off = zeros(1,.5*unit);
 dash = [off on off];
 
 % Calculate a word space vector
@@ -19,61 +19,71 @@ word_space = zeros(1,7*unit);
 word_space = [on word_space on];
 
 % Calculate a letter space vector
-on = ones(1,unit);
+on = ones(1,.2*unit);
 letter_space = zeros(1,3*unit); 
 letter_space = [on letter_space on];
 
 % Get the converted morse input
-input = ' hello world this is 555 a longer high error test ';
-x_raw = morse(input);
+string = ' Hello World ';
+% string = input("Enter a string to translate: ", 's');
+string = append(' ', string)
+x_raw = morse(string);
 x = x_raw;
-soundsc(x, 1000)
+soundsc(x_raw, 1000)
 
 % Filter the signal to digital
-x = medfilt1(x, unit);
-x(x < .5) = 0;
-x(x >= .5) = 1;
+% x = medfilt1(x, unit);
+% x(x < .5) = 0;
+% x(x >= .5) = 1;
 
-t_dash = .85;
-t_dot = .75;
-t_letter = .85;
+t_dash = .8;
+t_dot = .8;
+t_letter = .8;
 t_word = .9;
 
 % Dashes
 [dash_corro,lags_dash] = xcorr(x, dash);
-[na_dash_corro, lags_dash] = xcorr(~x, ~dash);
+[na_dash_corro, lags_dash] = xcorr(flip(x), flip(dash));
 dash_corro = dash_corro + na_dash_corro;
 dash_corro = dash_corro / max(dash_corro);
+na_dash_corro = na_dash_corro / max(na_dash_corro);
 dash_locatoins = find_peaks(dash_corro, t_dash);
 
-% Dots
-[dot_corro,lags_dot] = xcorr(x, dots);
-[na_dot_corro,lags_dot] = xcorr(~x, ~dots);
+% Dots 
+[dot_corro, lags_dot] = xcorr(x, dots);
+[na_dot_corro, lags_dot] = xcorr(flip(x), flip(dots));
 dot_corro = dot_corro + na_dot_corro;
 dot_corro = dot_corro / max(dot_corro);
+na_dot_corro = na_dot_corro / max(na_dot_corro);
 dot_locations = find_peaks(dot_corro, t_dot);
 
 % Spaces Letter
-[space_letter_corro, lags_space] = xcorr(~x, ~letter_space);
-[na_space_letter_corro, lags_space] = xcorr(x, letter_space);
+[space_letter_corro, lags_space] = xcorr(x, letter_space);
+[na_space_letter_corro, lags_space] = xcorr(flip(x), flip(letter_space));
 space_letter_corro = space_letter_corro + na_space_letter_corro;
 space_letter_corro = space_letter_corro / max(space_letter_corro);
+na_space_letter_corro = na_space_letter_corro / max(na_space_letter_corro);
 space_letter_locations = find_peaks(space_letter_corro, t_letter);
 
 % Spaces Word
-[space_word_corro,lags_space] = xcorr(~x, ~word_space);
-[na_space_word_corro, lags_space] = xcorr(x, letter_space);
-% space_word_corro = space_word_corro + na_space_word_corro;
+[space_word_corro,lags_space] = xcorr(x, word_space);
+[na_space_word_corro, lags_space] = xcorr(flip(x), flip(word_space));
+space_word_corro = space_word_corro + na_space_word_corro;
 space_word_corro = space_word_corro / max(space_word_corro);
+na_space_word_corro = na_space_word_corro / max(na_space_word_corro);
 space_word_locations = find_peaks(space_word_corro, t_word);
 
+% test = cross_corrolation(x, dash);
+% plot(test)
 % Plot
+figure(1)
+sgtitle("Cross Correlation")
 subplot(2, 2 , 1); hold on;  xlim([1 length(x)]);
 threshold_line = ones(1, length(x))*t_dash; 
 xlim([lags_dash(find(dash_corro > .001, 1, 'first')) length(x)]);
 ylim([-.3 1.3])
 title("Dash Plot")
-plot(x);
+plot(x_raw);
 plot(threshold_line)
 plot(lags_dash, dash_corro, 'r');
 
@@ -97,12 +107,15 @@ plot(lags_space, space_letter_corro, 'r')
 
 subplot(2, 2 , 4); hold on;
 threshold_line = ones(1, length(x))*t_word; 
+lags_space(find(space_word_corro > .001, 1, 'first'))
+length(x)
 xlim([lags_space(find(space_word_corro > .001, 1, 'first')) length(x)]); 
 ylim([-.3 1.3])
 title("Word Space Plot")
 plot(x_raw)
 plot(threshold_line)
 plot(lags_space, space_word_corro, 'r')
+
 
 
 % Build the output from the locations of dots dashes and spaces
@@ -171,7 +184,7 @@ for i = outputs
     end
 end
 
-disp("Input: " + input)
+disp("Input: " + string)
 disp("Output: " + output_letters)
 disp("Output Dots Dashes: " + output_string)
 disp("Percentage Dashes: " + percent_dashes + "%")
@@ -182,15 +195,46 @@ function peaks = find_peaks(signal, threshold)
     threshold = threshold * 100000;
     signal = round(signal * 100000);
     peaks = [];
+    in_peak = false;
     for i = 2:length(signal)-1
         last = signal(i - 1);
         current = signal(i);
         next = signal(i + 1);
-        if current > threshold && current > next && current >= last
+        if current > threshold
+            in_peak = true;
+        elseif current < threshold && in_peak
             peaks = [peaks, i];
+            in_peak = false;
         end
+        
+       
+%         if current > threshold && current > next && current >= last
+%             
+%         end
     end
 end
+
+function result = flip(x)
+    x = -1 * x;
+    x = x + 1;
+    result = x;
+end
+
+% function cross = cross_corrolation(x, y)
+%     cross = [];
+%     y_pad = [y zeros(1, length(x)*2)];
+%     for i = 1:length(y)
+%        s = 0;
+%        for j = 1:length(x)
+%            x(j);
+%            y_pad(j + i);
+%            s = s + x(j) * y_pad(j + i);
+%        end
+%        cross = [cross, s];
+%     end
+% end
+
+
 
 
 
