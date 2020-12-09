@@ -26,8 +26,8 @@ letter_space = [on letter_space on];
 % Get the converted morse input
 string = ' Hello World ';
 % string = input("Enter a string to translate: ", 's');
-string = append(' ', string)
-x_raw = morse(string);
+string = append(' ', string);
+x_raw = morse(string, 1000000);
 x = x_raw;
 soundsc(x_raw, 1000)
 
@@ -107,16 +107,12 @@ plot(lags_space, space_letter_corro, 'r')
 
 subplot(2, 2 , 4); hold on;
 threshold_line = ones(1, length(x))*t_word; 
-lags_space(find(space_word_corro > .001, 1, 'first'))
-length(x)
 xlim([lags_space(find(space_word_corro > .001, 1, 'first')) length(x)]); 
 ylim([-.3 1.3])
 title("Word Space Plot")
 plot(x_raw)
 plot(threshold_line)
 plot(lags_space, space_word_corro, 'r')
-
-
 
 % Build the output from the locations of dots dashes and spaces
 output_string = "";
@@ -196,15 +192,23 @@ function peaks = find_peaks(signal, threshold)
     signal = round(signal * 100000);
     peaks = [];
     in_peak = false;
+    peak_start = 0;
     for i = 2:length(signal)-1
         last = signal(i - 1);
         current = signal(i);
         next = signal(i + 1);
         if current > threshold
+            if ~in_peak
+                peak_start = i;
+            end
             in_peak = true;
         elseif current < threshold && in_peak
-            peaks = [peaks, i];
-            in_peak = false;
+            if i - peak_start > 5
+                peaks = [peaks, i];
+                in_peak = false;
+            else
+                in_peak = false;
+            end
         end
         
        

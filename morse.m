@@ -1,4 +1,4 @@
-function [morseText] = morse(string)
+function [morseText] = morse(string, snr)
  
 %% Translate AlphaNumeric Text to Morse Text  (Still may need adjustments to spaces to reduce confusion between other spaces)
  % types of spaces: - after each element(dot and dash)(included in dot and
@@ -69,7 +69,8 @@ morseDictionary = {{' ',word_space},{'',''},{'',''},{'',''},...
       %Takes morseText and creates an image representation of the encoded string.  
       x = morseText;
     
-        morseText = awgn(morseText, 1, 'measured');
+        snr_db = 10*log10(snr);
+        morseText = awgn(morseText, snr_db, 'measured');
 %      morseText = morseText * (9/10) + randn(1, length(morseText)) * (1/10);
 % for k=1:length(x)
 %   x0=k;
