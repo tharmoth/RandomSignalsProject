@@ -1,5 +1,6 @@
-function [morseText] = morse(string, snr)
- 
+function [morseText] = morse(string, snr, e)
+global error_percentage
+error_percentage = e;
 %% Translate AlphaNumeric Text to Morse Text  (Still may need adjustments to spaces to reduce confusion between other spaces)
  % types of spaces: - after each element(dot and dash)(included in dot and
  %                  dash generating functions)
@@ -111,13 +112,12 @@ function letter_space = letter_space
     letter_space = zeros(1,2*unit+error_offset); 
 end
 
-
 function error_offset = error_offset
-    percentage = 0;
+    global error_percentage
+    percentage = error_percentage;
     unit = 100;
     error_offset = round(percentage/2*(rand*2-1)*unit);
 end
-
 
 function unit = unit
     unit = 100;
