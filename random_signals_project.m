@@ -1,6 +1,7 @@
 clc; clear; clf; format compact; clear sound; clear all; close all;
 
 p = 2
+
 % Print SNR graph
 if p == 0
     figure(1)
@@ -41,6 +42,8 @@ if p == 0
     ylabel('Intensity')
 end
 
+% Run the program to generate a 3d plot at various levels of both SNR and
+% ULV
 if p == 1
     % Get the converted morse input
     A = importdata('test_text.txt');
@@ -86,6 +89,7 @@ if p == 1
     ylabel('Unit length variance')
 end
 
+% Run the program once on a test string
 if p == 2
     string = 'THIS IS A LONGER TEST';
     string = append(' ', string);
@@ -96,8 +100,9 @@ if p == 2
     disp("Output Dots Dashes: " + output_morse)
 end
 
+% Generate plots for various levels of both ULV and SNR
 if p == 3
-        % Get the converted morse input
+    % Get the converted morse input
     A = importdata('test_text.txt');
     string = char(A{1});
 %     string = 'THIS IS A LONGER TEST';
@@ -150,20 +155,12 @@ if p == 3
     ylim([0, length(string)])
 end
 
+% Save out the waveform for use elsewhere
 if p == 4
     string = 'THIS IS A LONGER TEST';
     string = append(' ', string);
     x_raw = morse(string, 100000000000, 1);
 %     soundsc(x_raw)
     plot(x_raw)
-%     [decoded_string, output_morse] = correlation_decoder(x_raw, false);
     audiowrite('MorseSignal.wav',x_raw, 44100)
-end
-
-if p == 5
-    string = 'THIS IS A LONGER TEST';
-    x_raw = morse(string, 1, 1);
-    [correlation, lags] = xcorr(x_raw, [zeros(1, 10000) x_raw]);
-    plot(x_raw); hold on;
-    plot(lags, correlation)
 end
