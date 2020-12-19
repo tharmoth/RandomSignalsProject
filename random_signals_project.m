@@ -1,6 +1,8 @@
 clc; clear; clf; format compact; clear sound; clear all; close all;
 
-p = 2
+p = 5;
+global unit_num
+unit_num = 2;
 
 % Print SNR graph
 if p == 0
@@ -53,9 +55,9 @@ if p == 1
     string = append(' ', string);
     x_raw = morse(string, 100000000, 0);
     % soundsc(x_raw, 1000)
-    [decoded_string, output_morse] = correlation_decoder(x_raw, false);
+    [decoded_string_corr, output_morse] = correlation_decoder(x_raw, false);
     disp("Input: " + string)
-    disp("Output: " + decoded_string)
+    disp("Output: " + decoded_string_corr)
     disp("Output Dots Dashes: " + output_morse)
     
     unit_var = 1:-.1:0;
@@ -66,8 +68,8 @@ if p == 1
         for unit = 1:length(unit_var)
             for snr = 1:length(snr_rates)
                 x_raw = morse(string, snr_rates(snr), unit_var(unit));
-                [decoded_string, output_morse] = correlation_decoder(x_raw, false);
-                d = editDistance(string, decoded_string) - 1;
+                [decoded_string_corr, output_morse] = correlation_decoder(x_raw, false);
+                d = editDistance(string, decoded_string_corr) - 1;
                 distance(unit, snr) = distance(unit, snr) + d / iterations;
             end
         end
@@ -93,11 +95,18 @@ end
 if p == 2
     string = 'THIS IS A LONGER TEST';
     string = append(' ', string);
-    x_raw = morse(string, 100000000000, 1);
-    [decoded_string, output_morse] = correlation_decoder(x_raw, false);
+    x_raw = morse(string, 100000000000, 0);
+    [decoded_string_corr, output_morse] = correlation_decoder(x_raw, true);
     disp("Input: " + string)
-    disp("Output: " + decoded_string)
+    disp("Output: " + decoded_string_corr)
     disp("Output Dots Dashes: " + output_morse)
+    
+    string = 'THIS IS A LONGER TEST ';
+    string = append(' ', string);
+    x_raw = morse(string, 100000000000, 0);
+    [decoded_string_corr] = wavelet_decoder(x_raw, false);
+    disp("Input: " + string)
+    disp("Output: " + decoded_string_corr)
 end
 
 % Generate plots for various levels of both ULV and SNR
@@ -110,9 +119,9 @@ if p == 3
     string = append(' ', string);
     x_raw = morse(string, 100000000, 0);
     % soundsc(x_raw, 1000)
-    [decoded_string, output_morse] = correlation_decoder(x_raw, false);
+    [decoded_string_corr, output_morse] = correlation_decoder(x_raw, false);
     disp("Input: " + string)
-    disp("Output: " + decoded_string)
+    disp("Output: " + decoded_string_corr)
     disp("Output Dots Dashes: " + output_morse)
     
     unit_var = 1:-.1:0;
@@ -122,8 +131,8 @@ if p == 3
     for j = 1:iterations
         for unit = 1:length(unit_var)
             x_raw = morse(string, 100000000, unit_var(unit));
-            [decoded_string, output_morse] = correlation_decoder(x_raw, false);
-            d = editDistance(string, decoded_string) - 1;
+            [decoded_string_corr, output_morse] = correlation_decoder(x_raw, false);
+            d = editDistance(string, decoded_string_corr) - 1;
             distance_unit(unit) = distance_unit(unit) + d / iterations;
         end
     end
@@ -133,8 +142,8 @@ if p == 3
     for j = 1:iterations
         for snr = 1:length(snr_rates)
             x_raw = morse(string, snr_rates(snr), 0);
-            [decoded_string, output_morse] = correlation_decoder(x_raw, false);
-            d = editDistance(string, decoded_string) - 1;
+            [decoded_string_corr, output_morse] = correlation_decoder(x_raw, false);
+            d = editDistance(string, decoded_string_corr) - 1;
             distance_snr(snr) = distance_snr(snr) + d / iterations;
         end
     end
@@ -163,4 +172,80 @@ if p == 4
 %     soundsc(x_raw)
     plot(x_raw)
     audiowrite('MorseSignal.wav',x_raw, 44100)
+end
+
+% Compare wavelets to cross correlation
+if p == 5    
+    % Get the converted morse input
+    A = importdata('test_text.txt');
+    string = char(A{1});
+    string = 'THIS IS A LONGER TEST';
+    disp(length(string))
+    string = append(' ', string);
+    x_raw = morse(string, 100000000, 0);
+    % soundsc(x_raw, 1000)
+    [decoded_string_corr, output_morse] = correlation_decoder(x_raw, false);
+    disp("Input: " + string)
+    disp("Output: " + decoded_string_corr)
+    disp("Output Dots Dashes: " + output_morse)
+    [decoded_string_corr] = wavelet_decoder(x_raw, false);
+    disp("Output: " + decoded_string_corr)
+    
+    unit_var = 1:-.1:0;
+    distance_unit_corr =  zeros(1, length(unit_var));
+    distance_unit_wave =  zeros(1, length(unit_var));
+    iterations = 20;
+    for j = 1:iterations
+        for unit = 1:length(unit_var)
+            unit_num = 50;
+            x_raw = morse(string, 100000000, unit_var(unit));
+            [decoded_string_corr, ~] = correlation_decoder(x_raw, false);
+            d_corr = editDistance(string, decoded_string_corr) - 1;
+            distance_unit_corr(unit) = distance_unit_corr(unit) + d_corr / iterations;
+            
+            unit_num = 2;
+            x_raw = morse(string, 100000000, unit_var(unit));
+            [decoded_string_wave] = wavelet_decoder(x_raw, false);
+            d_wave = editDistance(string, decoded_string_wave) - 1;
+            distance_unit_wave(unit) = distance_unit_wave(unit) + d_wave / iterations;
+        end
+    end
+    
+    snr_rates = [30:-1:5 5:-.1:0];
+    distance_snr_corr =  zeros(1, length(snr_rates));
+    distance_snr_wave =  zeros(1, length(snr_rates));
+    for j = 1:iterations
+        for snr = 1:length(snr_rates)
+            unit_num = 50;
+            x_raw = morse(string, snr_rates(snr), 0);
+            [decoded_string_corr, ~] = correlation_decoder(x_raw, false);
+            d_corr = editDistance(string, decoded_string_corr) - 1;
+            distance_snr_corr(snr) = distance_snr_corr(snr) + d_corr / iterations;
+            
+            unit_num = 2;
+            x_raw = morse(string, snr_rates(snr), 0);
+            [decoded_string_wave] = wavelet_decoder(x_raw, false);
+            d_wave = editDistance(string, decoded_string_wave) - 1;
+            distance_snr_wave(snr) = distance_snr_wave(snr) + d_wave / iterations;
+        end
+    end
+    
+    figure(1); clf;
+    subplot(1, 2, 1)
+    plot(snr_rates, distance_snr_corr); hold on;
+    plot(snr_rates, distance_snr_wave);
+    legend('Correlation', 'Wavelet')
+    title('Errors vs Signal to Noise Ratio')
+    xlabel('Signal to Noise Ratio')
+    ylabel('Number of Errors')
+    
+    subplot(1, 2, 2)
+    plot(unit_var, distance_unit_corr); hold on;
+    plot(unit_var, distance_unit_wave);
+    set ( gca, 'xdir', 'reverse' )
+    legend('Correlation', 'Wavelet')
+    title('Errors vs Unit Length Variance')
+    xlabel('Unit Length Variance')
+    ylabel('Number of Errors')
+    ylim([0, length(string)])
 end

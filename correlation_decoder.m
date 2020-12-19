@@ -1,5 +1,6 @@
 function [output_string, output_morse] = correlation_decoder(signal, should_plot)
-    unit = 100;
+    global unit_num
+    unit = unit_num;
 
     % Calculate a dots vector
     on = ones(1,unit);
@@ -17,7 +18,8 @@ function [output_string, output_morse] = correlation_decoder(signal, should_plot
     word_space = [on word_space on];
 
     % Calculate a letter space vector
-    on = ones(1,.2*unit);
+%     on = ones(1,.2*unit);
+    on = ones(1,.5*unit);
     letter_space = zeros(1,3*unit); 
     letter_space = [on letter_space on];
 
@@ -33,7 +35,7 @@ function [output_string, output_morse] = correlation_decoder(signal, should_plot
     [space_word_corro, lags_space, space_word_locations] = detect(signal, word_space, t_word);
 
     if should_plot
-%         figure(1)
+        figure(1); clf;
         sgtitle("Cross Correlation")
         subplot(2, 2 , 1); hold on;
         threshold_line = ones(1, length(signal))*t_dash; 
@@ -145,6 +147,8 @@ function peaks = find_peaks(signal, threshold)
     peaks = [];
     in_peak = false;
     peak_start = 0;
+    global unit_num
+    min_peak_size = round(unit_num / 20);
     for i = 2:length(signal)-1
         current = signal(i);
         if current > threshold
@@ -153,7 +157,7 @@ function peaks = find_peaks(signal, threshold)
             end
             in_peak = true;
         elseif current < threshold && in_peak
-            if i - peak_start > 5
+            if i - peak_start > min_peak_size
                 peaks = [peaks, i];
                 in_peak = false;
             else

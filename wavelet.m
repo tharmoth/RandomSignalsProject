@@ -1,8 +1,9 @@
 %% wavelets
-
+clc; clear; clf; format compact; clear sound; clear all; close all;
 
 %subplot(4,2,1);
-%morse('hello there')
+morsearray = morse(' hello there ', 1000000, 0);
+morseText = morsearray;
 %title('Image of Message');
 
 %rect wavelet

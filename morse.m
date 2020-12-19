@@ -115,10 +115,10 @@ end
 function error_offset = error_offset
     global error_percentage
     percentage = error_percentage;
-    unit = 100;
     error_offset = round(percentage/2*(rand*2-1)*unit);
 end
 
 function unit = unit
-    unit = 100;
+    global unit_num
+    unit = unit_num;
 end
